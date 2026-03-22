@@ -35,7 +35,8 @@ struct FillEvent {
     Side side;
     double price;
     double quantity;
-    double commission;
+    double commission;       // 本次操作的佣金
+    double buy_commission;   // 卖出时分摊的买入侧佣金（买入时为 0）
     double pnl;
     int64_t timestamp_ms;
 };

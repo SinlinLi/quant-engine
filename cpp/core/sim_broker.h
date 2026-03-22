@@ -8,7 +8,9 @@ namespace qe {
 
 struct SimBrokerConfig {
     double cash = 10000.0;
-    double commission_rate = 0.0004;  // 万四
+    double commission_rate = 0.0004;  // 统一费率（向后兼容，优先级低于 maker/taker）
+    double maker_fee = -1.0;          // maker 费率（<0 表示使用 commission_rate）
+    double taker_fee = -1.0;          // taker 费率（<0 表示使用 commission_rate）
     double slippage = 0.0;            // 滑点比例
 };
 

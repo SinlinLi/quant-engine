@@ -30,6 +30,9 @@
 // test_engine.cpp
 #include "test/test_engine.cpp"
 
+// test_correctness.cpp — P0 正确性测试
+#include "test/test_correctness.cpp"
+
 int main() {
     printf("=== quant-engine unit tests ===\n\n");
 
@@ -100,6 +103,18 @@ int main() {
     RUN_TEST(engine_multi_feed_merge);
     RUN_TEST(engine_indicator_lifecycle);
     RUN_TEST(engine_performance_drawdown);
+
+    printf("\n[Correctness]\n");
+    RUN_TEST(on_stop_fills_at_close_price);
+    RUN_TEST(accounting_identity);
+    RUN_TEST(equity_curve_length);
+    RUN_TEST(on_order_callback_fired);
+    RUN_TEST(submit_zero_quantity_rejected);
+    RUN_TEST(win_rate_deducts_both_commissions);
+    RUN_TEST(maker_taker_fee_split);
+    RUN_TEST(zombie_market_order_cancelled);
+    RUN_TEST(sell_slippage);
+    RUN_TEST(multiple_buys_avg_price);
 
     TEST_SUMMARY();
     return g_tests_failed > 0 ? 1 : 0;

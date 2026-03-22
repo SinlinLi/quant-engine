@@ -89,6 +89,7 @@ PYBIND11_MODULE(qe, m) {
         .def_readonly("price", &FillEvent::price)
         .def_readonly("quantity", &FillEvent::quantity)
         .def_readonly("commission", &FillEvent::commission)
+        .def_readonly("buy_commission", &FillEvent::buy_commission)
         .def_readonly("pnl", &FillEvent::pnl)
         .def_readonly("timestamp_ms", &FillEvent::timestamp_ms);
 
@@ -218,6 +219,8 @@ PYBIND11_MODULE(qe, m) {
         .def(py::init<>())
         .def_readwrite("cash", &SimBrokerConfig::cash)
         .def_readwrite("commission_rate", &SimBrokerConfig::commission_rate)
+        .def_readwrite("maker_fee", &SimBrokerConfig::maker_fee)
+        .def_readwrite("taker_fee", &SimBrokerConfig::taker_fee)
         .def_readwrite("slippage", &SimBrokerConfig::slippage);
 
     // --- CsvFeed ---

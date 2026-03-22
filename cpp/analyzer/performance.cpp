@@ -17,7 +17,7 @@ void calc_performance(const std::vector<FillEvent>& fills,
     for (const auto& f : fills) {
         if (f.side == Side::SELL) {
             ++sell_count;
-            if (f.pnl - f.commission > 0) ++wins;
+            if (f.pnl - f.commission - f.buy_commission > 0) ++wins;
         }
     }
     result.total_trades = sell_count;

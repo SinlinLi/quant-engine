@@ -90,7 +90,11 @@ void SimBroker::try_fill(Order& order, const Bar& bar) {
     // 买入检查可用资金
     if (order.side == Side::BUY) {
         double cost = fill_price * order.quantity;
-        double commission = cost * config_.commission_rate;
+        double buy_fee = (order.type == OrderType::MARKET && config_.taker_fee >= 0)
+            ? config_.taker_fee
+            : (order.type == OrderType::LIMIT && config_.maker_fee >= 0)
+                ? config_.maker_fee : config_.commission_rate;
+        double commission = cost * buy_fee;
         if (portfolio_.cash() < cost + commission) {
             if (order.type == OrderType::MARKET)
                 order.status = OrderStatus::CANCELLED;  // 市价单无法等待，直接取消
@@ -110,8 +114,14 @@ void SimBroker::try_fill(Order& order, const Bar& bar) {
             order.quantity = held;  // clamp 到实际持仓
     }
 
-    auto fill = portfolio_.fill_order(order, fill_price, bar.timestamp_ms,
-                                      config_.commission_rate);
+    // maker/taker 费率：限价单用 maker，市价单用 taker
+    double fee_rate = config_.commission_rate;
+    if (order.type == OrderType::LIMIT && config_.maker_fee >= 0)
+        fee_rate = config_.maker_fee;
+    else if (order.type == OrderType::MARKET && config_.taker_fee >= 0)
+        fee_rate = config_.taker_fee;
+
+    auto fill = portfolio_.fill_order(order, fill_price, bar.timestamp_ms, fee_rate);
     fills_.push_back(fill);
 }
 

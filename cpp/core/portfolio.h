@@ -28,6 +28,7 @@ private:
     double equity_;
     std::vector<Position> positions_;
     std::vector<double> last_prices_;
+    std::vector<double> buy_commissions_;  // 每个 symbol 的累计买入佣金（未分摊部分）
 };
 
 }  // namespace qe
