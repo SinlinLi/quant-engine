@@ -88,6 +88,16 @@ def _load_strategy(name: str, symbols: list[str], params: dict):
         fast = params.get("fast", 5)
         slow = params.get("slow", 20)
         return DualMA(symbols[0], fast_period=fast, slow_period=slow)
+    if name == "macd_cross":
+        from strategies.macd_cross import MACDCross
+        fast = params.get("fast", 12)
+        slow = params.get("slow", 26)
+        signal = params.get("signal", 9)
+        return MACDCross(symbols[0], fast=fast, slow=slow, signal=signal)
+    if name == "momentum_rotation":
+        from strategies.momentum_rotation import MomentumRotation
+        lookback = params.get("lookback", 20)
+        return MomentumRotation(symbols, lookback=lookback)
     raise ValueError(f"unknown strategy: {name}")
 
 
