@@ -3,7 +3,7 @@
 #include <queue>
 #include <functional>
 #include <stdexcept>
-#include <unordered_map>
+#include <map>
 
 namespace qe {
 
@@ -34,6 +34,12 @@ PerformanceResult Engine::run() {
 
     Context ctx(*this, *broker_, symbols_);
 
+    // 接通 on_order 回调：Broker 成交/取消 → Strategy::on_order()
+    broker_->set_order_callback([&](const Order& order) {
+        for (auto& strategy : strategies_)
+            strategy->on_order(ctx, order);
+    });
+
     // 初始化策略
     for (auto& strategy : strategies_)
         strategy->on_init(ctx);
@@ -58,11 +64,9 @@ PerformanceResult Engine::run() {
     PerformanceResult result;
     result.initial_cash = initial_equity;
 
-    int64_t last_equity_ts = 0;
-    constexpr int64_t EQUITY_SAMPLE_INTERVAL = 60000;  // 每分钟采样净值
-
     // 记录每个 symbol 的最后一根 bar（on_stop flush 用）
-    std::unordered_map<uint16_t, Bar> last_bars;
+    // 用 std::map 保证 flush 遍历顺序确定（按 symbol_id 排序）
+    std::map<uint16_t, Bar> last_bars;
     int64_t first_ts = 0;
     int64_t last_ts = 0;
 
@@ -92,11 +96,8 @@ PerformanceResult Engine::run() {
         for (auto& strategy : strategies_)
             strategy->on_bar(ctx, sid, bar);
 
-        // 4. 采样净值曲线
-        if (bar.timestamp_ms - last_equity_ts >= EQUITY_SAMPLE_INTERVAL) {
-            result.equity_curve.push_back(broker_->equity());
-            last_equity_ts = bar.timestamp_ms;
-        }
+        // 4. 逐 bar 采样净值曲线
+        result.equity_curve.push_back(broker_->equity());
 
         // 5. 推进 feed
         if (feed->next())
@@ -110,9 +111,15 @@ PerformanceResult Engine::run() {
     for (auto& strategy : strategies_)
         strategy->on_stop(ctx);
 
-    // flush: 仅处理 on_stop 阶段新提交的订单
-    for (auto& [sid, bar] : last_bars)
-        broker_->on_bar(sid, bar);
+    // flush: 用 close 价撮合 on_stop 阶段新提交的订单
+    // close 是该 bar 最后已知价格，语义上对应"收盘后平仓"
+    for (auto& [sid, bar] : last_bars) {
+        Bar flush_bar = bar;
+        flush_bar.open = bar.close;   // 市价单以 close 价成交
+        flush_bar.high = bar.close;
+        flush_bar.low = bar.close;
+        broker_->on_bar(sid, flush_bar);
+    }
 
     // 计算绩效
     result.final_equity = broker_->equity();

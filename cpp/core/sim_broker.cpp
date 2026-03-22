@@ -51,7 +51,7 @@ void SimBroker::on_bar(uint16_t symbol_id, const Bar& bar) {
         try_fill(*it, bar);
         if (it->status == OrderStatus::FILLED || it->status == OrderStatus::CANCELLED) {
             if (order_cb_)
-                order_cb_(*it, order_cb_ctx_);
+                order_cb_(*it);
             it = pending_orders_.erase(it);
         } else {
             ++it;

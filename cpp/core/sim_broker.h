@@ -25,21 +25,12 @@ public:
     const std::vector<FillEvent>& fills() const override { return fills_; }
     void cancel_all_pending() override { pending_orders_.clear(); }
 
-    // on_bar 成交的订单通知回调（Engine 设置）
-    using OrderCallback = void(*)(const Order&, void*);
-    void set_order_callback(OrderCallback cb, void* ctx) {
-        order_cb_ = cb;
-        order_cb_ctx_ = ctx;
-    }
-
 private:
     SimBrokerConfig config_;
     Portfolio portfolio_;
     std::vector<Order> pending_orders_;
     std::vector<FillEvent> fills_;
     uint64_t next_order_id_ = 1;
-    OrderCallback order_cb_ = nullptr;
-    void* order_cb_ctx_ = nullptr;
 
     void try_fill(Order& order, const Bar& bar);
 };
