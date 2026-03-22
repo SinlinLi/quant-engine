@@ -7,6 +7,8 @@ SimBroker::SimBroker(const SimBrokerConfig& config)
     : config_(config), portfolio_(config.cash) {}
 
 uint64_t SimBroker::submit_order(Order order) {
+    if (order.quantity <= 0)
+        return 0;  // 无效订单，拒绝提交
     order.id = next_order_id_++;
     order.status = OrderStatus::PENDING;
     pending_orders_.push_back(order);
@@ -47,7 +49,7 @@ void SimBroker::on_bar(uint16_t symbol_id, const Bar& bar) {
             continue;
         }
         try_fill(*it, bar);
-        if (it->status == OrderStatus::FILLED) {
+        if (it->status == OrderStatus::FILLED || it->status == OrderStatus::CANCELLED) {
             if (order_cb_)
                 order_cb_(*it, order_cb_ctx_);
             it = pending_orders_.erase(it);
@@ -84,19 +86,25 @@ void SimBroker::try_fill(Order& order, const Bar& bar) {
         }
     }
 
-    // BUG-5: 买入检查可用资金
+    // 买入检查可用资金
     if (order.side == Side::BUY) {
         double cost = fill_price * order.quantity;
         double commission = cost * config_.commission_rate;
-        if (portfolio_.cash() < cost + commission)
-            return;  // 资金不足，拒绝成交
+        if (portfolio_.cash() < cost + commission) {
+            if (order.type == OrderType::MARKET)
+                order.status = OrderStatus::CANCELLED;  // 市价单无法等待，直接取消
+            return;
+        }
     }
 
-    // BUG-1: 卖出检查持仓，防止超卖
+    // 卖出检查持仓，防止超卖
     if (order.side == Side::SELL) {
         double held = portfolio_.position(order.symbol_id).quantity;
-        if (held <= 0)
-            return;  // 无持仓
+        if (held <= 0) {
+            if (order.type == OrderType::MARKET)
+                order.status = OrderStatus::CANCELLED;
+            return;
+        }
         if (order.quantity > held)
             order.quantity = held;  // clamp 到实际持仓
     }

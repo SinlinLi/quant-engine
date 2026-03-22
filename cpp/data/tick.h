@@ -5,10 +5,10 @@
 namespace qe {
 
 struct Trade {
-    int64_t timestamp_ms;
-    double price;
-    double quantity;
-    bool is_buyer_maker;
+    int64_t timestamp_ms = 0;
+    double price = 0.0;
+    double quantity = 0.0;
+    bool is_buyer_maker = false;
 };
 
 struct DepthLevel {

@@ -29,6 +29,7 @@ void calc_performance(const std::vector<FillEvent>& fills,
     std::vector<double> returns;
     returns.reserve(equity_curve.size() - 1);
     for (size_t i = 1; i < equity_curve.size(); ++i) {
+        if (equity_curve[i - 1] < 1e-12) continue;  // 跳过 equity=0 避免除零
         double r = (equity_curve[i] - equity_curve[i - 1]) / equity_curve[i - 1];
         returns.push_back(r);
     }

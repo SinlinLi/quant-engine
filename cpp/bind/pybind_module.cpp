@@ -4,6 +4,7 @@
 #include "core/sim_broker.h"
 #include "core/strategy.h"
 #include "data/csv_feed.h"
+#include "data/tick.h"
 #include "indicator/sma.h"
 #include "indicator/ema.h"
 #include "indicator/rsi.h"
@@ -59,6 +60,7 @@ PYBIND11_MODULE(qe, m) {
     py::enum_<OrderStatus>(m, "OrderStatus")
         .value("PENDING", OrderStatus::PENDING)
         .value("FILLED", OrderStatus::FILLED)
+        .value("PARTIALLY_FILLED", OrderStatus::PARTIALLY_FILLED)
         .value("CANCELLED", OrderStatus::CANCELLED);
 
     // --- Bar ---
@@ -140,6 +142,28 @@ PYBIND11_MODULE(qe, m) {
         .def("lower", &Bollinger::lower)
         .def("bandwidth", &Bollinger::bandwidth);
 
+    // --- Order ---
+    py::class_<Order>(m, "Order")
+        .def_readonly("id", &Order::id)
+        .def_readonly("symbol_id", &Order::symbol_id)
+        .def_readonly("side", &Order::side)
+        .def_readonly("type", &Order::type)
+        .def_readonly("price", &Order::price)
+        .def_readonly("quantity", &Order::quantity)
+        .def_readonly("filled_quantity", &Order::filled_quantity)
+        .def_readonly("commission", &Order::commission)
+        .def_readonly("status", &Order::status)
+        .def_readonly("created_at", &Order::created_at)
+        .def_readonly("filled_at", &Order::filled_at);
+
+    // --- Trade ---
+    py::class_<Trade>(m, "Trade")
+        .def(py::init<>())
+        .def_readwrite("timestamp_ms", &Trade::timestamp_ms)
+        .def_readwrite("price", &Trade::price)
+        .def_readwrite("quantity", &Trade::quantity)
+        .def_readwrite("is_buyer_maker", &Trade::is_buyer_maker);
+
     // --- Context ---
     // 模板 indicator<T> 需要逐个实例化
     py::class_<Context>(m, "Context")
@@ -185,6 +209,8 @@ PYBIND11_MODULE(qe, m) {
         .def(py::init<>())
         .def("on_init", &Strategy::on_init)
         .def("on_bar", &Strategy::on_bar)
+        .def("on_tick", &Strategy::on_tick)
+        .def("on_order", &Strategy::on_order)
         .def("on_stop", &Strategy::on_stop);
 
     // --- SimBrokerConfig ---
