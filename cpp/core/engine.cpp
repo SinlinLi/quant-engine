@@ -121,6 +121,9 @@ PerformanceResult Engine::run() {
         broker_->on_bar(sid, flush_bar);
     }
 
+    // flush 后追加最终 equity 采样点
+    result.equity_curve.push_back(broker_->equity());
+
     // 计算绩效
     result.final_equity = broker_->equity();
     result.total_return = (result.final_equity - result.initial_cash) / result.initial_cash;
