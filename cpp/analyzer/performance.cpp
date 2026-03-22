@@ -11,17 +11,25 @@ void calc_performance(const std::vector<FillEvent>& fills,
                       double initial_cash,
                       int64_t start_ms, int64_t end_ms,
                       PerformanceResult& result) {
-    // 统计交易
+    // 统计交易 + profit factor
     int wins = 0;
     int sell_count = 0;
+    double gross_profit = 0.0, gross_loss = 0.0;
     for (const auto& f : fills) {
         if (f.side == Side::SELL) {
             ++sell_count;
-            if (f.pnl - f.commission - f.buy_commission > 0) ++wins;
+            double net = f.pnl - f.commission - f.buy_commission;
+            if (net > 0) {
+                ++wins;
+                gross_profit += net;
+            } else {
+                gross_loss += std::abs(net);
+            }
         }
     }
     result.total_trades = sell_count;
     result.win_rate = sell_count > 0 ? static_cast<double>(wins) / sell_count : 0.0;
+    result.profit_factor = gross_loss > 1e-12 ? gross_profit / gross_loss : 0.0;
 
     if (equity_curve.size() < 2) return;
 
@@ -65,6 +73,27 @@ void calc_performance(const std::vector<FillEvent>& fills,
     double years = duration_ms / MS_PER_YEAR;
     result.annual_return = (years > 1e-12) ? std::pow(total, 1.0 / years) - 1.0 : 0.0;
     result.sharpe = stddev > 1e-12 ? (mean / stddev) * std::sqrt(samples_per_year) : 0.0;
+
+    // Sortino ratio: 只用下行偏差
+    double downside_sq = 0.0;
+    int downside_count = 0;
+    for (double r : returns) {
+        if (r < 0) {
+            downside_sq += r * r;
+            ++downside_count;
+        }
+    }
+    double downside_dev = (downside_count > 0)
+        ? std::sqrt(downside_sq / returns.size())  // 用总样本数，不只是负收益数
+        : 0.0;
+    result.sortino = downside_dev > 1e-12
+        ? (mean / downside_dev) * std::sqrt(samples_per_year)
+        : 0.0;
+
+    // Calmar ratio: 年化收益 / 最大回撤
+    result.calmar = result.max_drawdown > 1e-12
+        ? result.annual_return / result.max_drawdown
+        : 0.0;
 }
 
 }  // namespace qe

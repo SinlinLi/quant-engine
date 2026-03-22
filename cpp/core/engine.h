@@ -13,6 +13,9 @@ namespace qe {
 
 struct PerformanceResult {
     double sharpe = 0.0;
+    double sortino = 0.0;          // Sortino ratio（只考虑下行风险）
+    double calmar = 0.0;           // Calmar ratio（年化收益 / 最大回撤）
+    double profit_factor = 0.0;    // 总盈利 / 总亏损
     double max_drawdown = 0.0;
     double annual_return = 0.0;
     double total_return = 0.0;

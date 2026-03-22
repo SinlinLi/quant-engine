@@ -12,6 +12,7 @@ struct SimBrokerConfig {
     double maker_fee = -1.0;          // maker 费率（<0 表示使用 commission_rate）
     double taker_fee = -1.0;          // taker 费率（<0 表示使用 commission_rate）
     double slippage = 0.0;            // 滑点比例
+    double max_volume_pct = 0.0;      // 最大 volume 参与率（0=无限制，如 0.1=不超过 bar volume 的 10%）
 };
 
 class SimBroker : public Broker {

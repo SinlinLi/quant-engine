@@ -33,6 +33,9 @@
 // test_correctness.cpp — P0 正确性测试
 #include "test/test_correctness.cpp"
 
+// test_phase2.cpp — Phase 2.2 测试
+#include "test/test_phase2.cpp"
+
 int main() {
     printf("=== quant-engine unit tests ===\n\n");
 
@@ -115,6 +118,20 @@ int main() {
     RUN_TEST(zombie_market_order_cancelled);
     RUN_TEST(sell_slippage);
     RUN_TEST(multiple_buys_avg_price);
+
+    printf("\n[StopOrders]\n");
+    RUN_TEST(stop_market_sell_triggered);
+    RUN_TEST(stop_market_sell_with_slippage);
+    RUN_TEST(stop_market_not_triggered);
+    RUN_TEST(stop_limit_sell_triggered);
+    RUN_TEST(stop_loss_integration);
+
+    printf("\n[VolumeLimits]\n");
+    RUN_TEST(volume_participation_limit);
+    RUN_TEST(volume_no_limit_when_zero);
+
+    printf("\n[Performance]\n");
+    RUN_TEST(performance_sortino_calmar_profit_factor);
 
     TEST_SUMMARY();
     return g_tests_failed > 0 ? 1 : 0;

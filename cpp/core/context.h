@@ -22,6 +22,8 @@ public:
     uint64_t sell(uint16_t symbol_id, double quantity);
     uint64_t buy_limit(uint16_t symbol_id, double price, double quantity);
     uint64_t sell_limit(uint16_t symbol_id, double price, double quantity);
+    uint64_t stop_loss(uint16_t symbol_id, double stop_price, double quantity);
+    uint64_t stop_limit(uint16_t symbol_id, double stop_price, double limit_price, double quantity);
     bool cancel(uint64_t order_id);
 
     // 查询

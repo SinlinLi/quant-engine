@@ -49,6 +49,30 @@ uint64_t Context::sell_limit(uint16_t symbol_id, double price, double quantity) 
     return broker_.submit_order(order);
 }
 
+uint64_t Context::stop_loss(uint16_t symbol_id, double stop_price, double quantity) {
+    Order order;
+    order.symbol_id = symbol_id;
+    order.side = Side::SELL;
+    order.type = OrderType::STOP_MARKET;
+    order.stop_price = stop_price;
+    order.quantity = quantity;
+    order.created_at = current_time_;
+    return broker_.submit_order(order);
+}
+
+uint64_t Context::stop_limit(uint16_t symbol_id, double stop_price,
+                              double limit_price, double quantity) {
+    Order order;
+    order.symbol_id = symbol_id;
+    order.side = Side::SELL;
+    order.type = OrderType::STOP_LIMIT;
+    order.stop_price = stop_price;
+    order.price = limit_price;
+    order.quantity = quantity;
+    order.created_at = current_time_;
+    return broker_.submit_order(order);
+}
+
 bool Context::cancel(uint64_t order_id) {
     return broker_.cancel_order(order_id);
 }

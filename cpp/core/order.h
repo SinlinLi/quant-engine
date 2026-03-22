@@ -5,7 +5,7 @@
 namespace qe {
 
 enum class Side : uint8_t { BUY, SELL };
-enum class OrderType : uint8_t { MARKET, LIMIT };
+enum class OrderType : uint8_t { MARKET, LIMIT, STOP_MARKET, STOP_LIMIT };
 enum class OrderStatus : uint8_t { PENDING, FILLED, PARTIALLY_FILLED, CANCELLED };
 
 struct Order {
@@ -13,7 +13,8 @@ struct Order {
     uint16_t symbol_id = 0;
     Side side = Side::BUY;
     OrderType type = OrderType::MARKET;
-    double price = 0.0;
+    double price = 0.0;       // 限价单/止损限价单的价格
+    double stop_price = 0.0;  // 止损触发价格（STOP_MARKET / STOP_LIMIT）
     double quantity = 0.0;
     double filled_quantity = 0.0;
     double commission = 0.0;

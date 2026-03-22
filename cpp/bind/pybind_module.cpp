@@ -55,7 +55,9 @@ PYBIND11_MODULE(qe, m) {
 
     py::enum_<OrderType>(m, "OrderType")
         .value("MARKET", OrderType::MARKET)
-        .value("LIMIT", OrderType::LIMIT);
+        .value("LIMIT", OrderType::LIMIT)
+        .value("STOP_MARKET", OrderType::STOP_MARKET)
+        .value("STOP_LIMIT", OrderType::STOP_LIMIT);
 
     py::enum_<OrderStatus>(m, "OrderStatus")
         .value("PENDING", OrderStatus::PENDING)
@@ -96,6 +98,9 @@ PYBIND11_MODULE(qe, m) {
     // --- PerformanceResult ---
     py::class_<PerformanceResult>(m, "PerformanceResult")
         .def_readonly("sharpe", &PerformanceResult::sharpe)
+        .def_readonly("sortino", &PerformanceResult::sortino)
+        .def_readonly("calmar", &PerformanceResult::calmar)
+        .def_readonly("profit_factor", &PerformanceResult::profit_factor)
         .def_readonly("max_drawdown", &PerformanceResult::max_drawdown)
         .def_readonly("annual_return", &PerformanceResult::annual_return)
         .def_readonly("total_return", &PerformanceResult::total_return)
@@ -150,6 +155,7 @@ PYBIND11_MODULE(qe, m) {
         .def_readonly("side", &Order::side)
         .def_readonly("type", &Order::type)
         .def_readonly("price", &Order::price)
+        .def_readonly("stop_price", &Order::stop_price)
         .def_readonly("quantity", &Order::quantity)
         .def_readonly("filled_quantity", &Order::filled_quantity)
         .def_readonly("commission", &Order::commission)
@@ -172,6 +178,10 @@ PYBIND11_MODULE(qe, m) {
         .def("sell", &Context::sell)
         .def("buy_limit", &Context::buy_limit)
         .def("sell_limit", &Context::sell_limit)
+        .def("stop_loss", &Context::stop_loss,
+             py::arg("symbol_id"), py::arg("stop_price"), py::arg("quantity"))
+        .def("stop_limit", &Context::stop_limit,
+             py::arg("symbol_id"), py::arg("stop_price"), py::arg("limit_price"), py::arg("quantity"))
         .def("cancel", &Context::cancel)
         .def("position", &Context::position, py::return_value_policy::reference)
         .def("equity", &Context::equity)
@@ -221,7 +231,8 @@ PYBIND11_MODULE(qe, m) {
         .def_readwrite("commission_rate", &SimBrokerConfig::commission_rate)
         .def_readwrite("maker_fee", &SimBrokerConfig::maker_fee)
         .def_readwrite("taker_fee", &SimBrokerConfig::taker_fee)
-        .def_readwrite("slippage", &SimBrokerConfig::slippage);
+        .def_readwrite("slippage", &SimBrokerConfig::slippage)
+        .def_readwrite("max_volume_pct", &SimBrokerConfig::max_volume_pct);
 
     // --- CsvFeed ---
     py::class_<CsvFeed>(m, "CsvFeed")
