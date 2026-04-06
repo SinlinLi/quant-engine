@@ -108,7 +108,8 @@ PYBIND11_MODULE(qe, m) {
         .def_readonly("win_rate", &PerformanceResult::win_rate)
         .def_readonly("initial_cash", &PerformanceResult::initial_cash)
         .def_readonly("final_equity", &PerformanceResult::final_equity)
-        .def_readonly("equity_curve", &PerformanceResult::equity_curve);
+        .def_readonly("equity_curve", &PerformanceResult::equity_curve)
+        .def_readonly("fills", &PerformanceResult::fills);
 
     // --- Indicator 基类（只读接口） ---
     py::class_<Indicator>(m, "Indicator")

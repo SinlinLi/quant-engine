@@ -130,6 +130,7 @@ PerformanceResult Engine::run() {
 
     const auto& fills = broker_->fills();
     calc_performance(fills, result.equity_curve, result.initial_cash, first_ts, last_ts, result);
+    result.fills = fills;
 
     return result;
 }

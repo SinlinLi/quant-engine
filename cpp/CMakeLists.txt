@@ -24,7 +24,7 @@ target_include_directories(qe_core PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 set_target_properties(qe_core PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
 # Main executable for testing
-add_executable(qe_backtest main.cpp strategies/dual_ma.cpp)
+add_executable(qe_backtest main.cpp strategies/dual_ma.cpp strategies/macd_cross.cpp)
 target_link_libraries(qe_backtest PRIVATE qe_core)
 
 # Unit tests
@@ -43,6 +43,10 @@ FetchContent_MakeAvailable(pybind11)
 
 pybind11_add_module(qe bind/pybind_module.cpp)
 target_link_libraries(qe PRIVATE qe_core)
+
+# C++ CLI (ClickHouse HTTP + 全速回测)
+add_executable(qe_cli cli/main.cpp strategies/dual_ma.cpp strategies/macd_cross.cpp)
+target_link_libraries(qe_cli PRIVATE qe_core)
 
 # Benchmark
 add_executable(qe_bench bench/benchmark.cpp)

@@ -55,13 +55,18 @@ def collect(
     interval: str = "1m",
     ch_host: str = "localhost",
     ch_port: int = 8123,
+    ch_user: str = "default",
+    ch_password: str = "***REMOVED***",
 ) -> int:
     """采集 Binance K 线并写入 ClickHouse
 
     Returns:
         写入的总行数
     """
-    client = clickhouse_connect.get_client(host=ch_host, port=ch_port)
+    client = clickhouse_connect.get_client(
+        host=ch_host, port=ch_port,
+        username=ch_user, password=ch_password,
+    )
     start_ms = _ts(start_date)
     end_ms = _ts(end_date) - 1  # 不含结束日
 
@@ -76,7 +81,8 @@ def collect(
         rows = []
         for k in klines:
             # Binance kline: [open_time, open, high, low, close, volume,
-            #                  close_time, quote_volume, ...]
+            #                  close_time, quote_volume, trades,
+            #                  taker_buy_base_vol, taker_buy_quote_vol, ...]
             rows.append([
                 symbol,
                 datetime.fromtimestamp(k[0] / 1000, tz=timezone.utc),
@@ -85,14 +91,19 @@ def collect(
                 float(k[3]),  # low
                 float(k[4]),  # close
                 float(k[5]),  # volume
+                datetime.fromtimestamp(k[6] / 1000, tz=timezone.utc),
                 float(k[7]),  # quote_volume
+                int(k[8]),    # trades
+                float(k[9]),  # taker_buy_base_vol
+                float(k[10]), # taker_buy_quote_vol
             ])
 
         client.insert(
-            "qe.bars",
+            "qe.klines_1m",
             rows,
-            column_names=["symbol", "timestamp", "open", "high", "low",
-                          "close", "volume", "quote_volume"],
+            column_names=["symbol", "open_time", "open", "high", "low",
+                          "close", "volume", "close_time", "quote_volume",
+                          "trades", "taker_buy_base_vol", "taker_buy_quote_vol"],
         )
 
         total += len(rows)

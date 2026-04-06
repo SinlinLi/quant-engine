@@ -8,7 +8,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 # Build everything (from repo root)
 mkdir -p build && cd build && cmake .. && make -j$(nproc)
 
-# Run unit tests (48 tests, custom framework - no gtest)
+# Run unit tests (custom framework - no gtest)
 ./build/cpp/qe_test
 
 # Run benchmark
@@ -25,6 +25,7 @@ The pybind11 module (`qe.cpython-*.so`) is built into `build/cpp/` (or `cpp/buil
 cd python
 python3 cli.py collect BTCUSDT --start 2024-01-01 --end 2024-01-31
 python3 cli.py backtest --strategy dual_ma --symbols BTCUSDT --start 2024-01-01 --end 2024-01-31
+python3 cli.py backtest --strategy macd_cross --symbols BTCUSDT --start 2024-01-01 --end 2025-01-01 --interval 1d --plot
 python3 cli.py list-data
 ```
 
@@ -34,17 +35,18 @@ python3 cli.py list-data
 
 ### C++ Core (`cpp/`)
 - **Engine** (`core/engine.h`): Event-driven backtest loop. Min-heap merges bars across multiple symbols by timestamp. Calls `Strategy::on_bar()` for each bar, updates indicators automatically.
-- **Context** (`core/context.h`): Strategy's interface to the engine. Provides order placement (`buy`/`sell`/`buy_limit`/`sell_limit`), position queries, and indicator access via `ctx.indicator<T>(symbol_id, args...)`. Template instantiations are cached by a string key (type+args). Indicators can only be created during `on_init`; after that, `lock_init()` prevents new registrations.
+- **Context** (`core/context.h`): Strategy's interface to the engine. Provides order placement (`buy`/`sell`/`buy_limit`/`sell_limit`/`stop_loss`/`stop_limit`/`cancel`), position queries, and indicator access via `ctx.indicator<T>(symbol_id, args...)`. Template instantiations are cached by a string key (type+args). Indicators can only be created during `on_init`; after that, `lock_init()` prevents new registrations.
 - **Strategy** (`core/strategy.h`): Pure virtual `on_bar()`, with optional `on_init`/`on_stop`/`on_tick`/`on_order` hooks.
-- **SimBroker** (`core/sim_broker.h`): Simulated broker with market/limit orders, commission, slippage. Portfolio tracks per-symbol positions with avg entry price and PnL.
+- **SimBroker** (`core/sim_broker.h`): Simulated broker with market/limit/stop-market/stop-limit orders, maker/taker fee split, slippage, and volume participation limits (`max_volume_pct`). Portfolio tracks per-symbol positions with avg entry price and PnL.
 - **Indicators** (`indicator/`): SMA, EMA, RSI, MACD, Bollinger. All inherit from `Indicator` base class (virtual `update(double)`, `value()`, `ready()`). Use `RingBuffer` for fixed-size circular storage.
-- **Analyzer** (`analyzer/performance.h`): Computes Sharpe, max drawdown, annual return, win rate from equity curve.
+- **Analyzer** (`analyzer/performance.h`): Computes Sharpe, Sortino, Calmar, profit factor, max drawdown, annual return, win rate from equity curve. Results returned in `PerformanceResult` struct.
 
 ### pybind11 Bindings (`cpp/bind/pybind_module.cpp`)
 - `PyStrategy` trampoline class enables Python subclasses to override C++ virtual functions.
 - C++ template `Context::indicator<T>()` is exposed as named methods: `ctx.sma()`, `ctx.ema()`, `ctx.rsi()`, `ctx.macd()`, `ctx.bollinger()`.
 - `Engine.add_feed_bars()` accepts a Python list of `Bar` objects (for ClickHouse pipeline).
 - `Engine.set_broker()` takes `SimBrokerConfig` (simplified vs C++ `unique_ptr<Broker>`).
+- `PyStrategy` trampoline exposes all hooks: `on_init`, `on_bar` (pure virtual), `on_stop`, `on_tick`, `on_order`.
 
 ### Python Layer (`python/`)
 - **cli.py**: CLI entry point with `collect`, `backtest`, `list-data` subcommands. Strategy loading via `_load_strategy()` name dispatch.
@@ -57,7 +59,9 @@ python3 cli.py list-data
 
 ## Test Framework
 
-Custom minimal test framework in `cpp/test/test_framework.h` — not gtest. Tests use `TEST()` macro and `ASSERT_*` helpers. All test files are `#include`-d into `test_main.cpp` as a single compilation unit.
+Custom minimal test framework in `cpp/test/test_framework.h` — not gtest. Tests use `TEST()` macro and `ASSERT_*` helpers (`ASSERT_TRUE`, `ASSERT_EQ`, `ASSERT_NEAR`, `ASSERT_GT`, `ASSERT_THROWS`). All test files are `#include`-d into `test_main.cpp` as a single compilation unit.
+
+To add a new test: create `cpp/test/test_foo.cpp`, `#include` it in `test_main.cpp`, and add `RUN_TEST(name)` calls to `main()`. The `make_bar()` helper in `test_framework.h` creates Bar objects for test data.
 
 ## Key Constraints
 

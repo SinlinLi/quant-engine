@@ -24,6 +24,7 @@ struct PerformanceResult {
     double initial_cash = 0.0;
     double final_equity = 0.0;
     std::vector<double> equity_curve;
+    std::vector<FillEvent> fills;
 };
 
 class Engine {

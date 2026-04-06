@@ -126,14 +126,19 @@ class PyBroker:
 # ─── 加载数据 ───
 
 def load_bars(symbol, start, end):
-    client = clickhouse_connect.get_client(host="localhost", port=8123)
+    import os
+    client = clickhouse_connect.get_client(
+        host="localhost", port=8123,
+        username=os.environ.get("QE_CH_USER", "default"),
+        password=os.environ.get("QE_CH_PASSWORD", ""),
+    )
     result = client.query(
-        "SELECT toInt64(toUnixTimestamp64Milli(timestamp)), "
+        "SELECT toInt64(toUnixTimestamp64Milli(open_time)), "
         "open, high, low, close, volume, quote_volume "
-        "FROM qe.bars "
+        "FROM qe.klines_1m "
         "WHERE symbol = %(symbol)s "
-        "AND timestamp >= %(start)s AND timestamp < %(end)s "
-        "ORDER BY timestamp",
+        "AND open_time >= %(start)s AND open_time < %(end)s "
+        "ORDER BY open_time",
         parameters={"symbol": symbol, "start": start, "end": end},
     )
     return result.result_rows
