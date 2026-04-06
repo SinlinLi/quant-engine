@@ -111,6 +111,8 @@ python3 cli.py backtest --strategy dual_ma --symbols BTCUSDT \
 |------|------|------|
 | `dual_ma` | 双均线交叉 | `fast`(5), `slow`(20) |
 | `macd_cross` | MACD 信号交叉 | `fast`(12), `slow`(26), `signal`(9) |
+| `rsi_reversal` | RSI 超买超卖反转 | `period`(14), `oversold`(30), `overbought`(70) |
+| `bollinger_breakout` | 布林带突破 | `period`(20), `std_dev`(2.0) |
 | `momentum_rotation` | 多币种动量轮动 | `lookback`(20) |
 
 **K 线周期**：非 1m 周期从 `klines_1m` 实时聚合（`argMin(open)`/`argMax(close)` 保证 OHLC 正确）。
@@ -229,14 +231,18 @@ quant-engine/
 │   ├── data/           # Bar, DataFeed, CsvFeed
 │   ├── indicator/      # SMA, EMA, RSI, MACD, Bollinger
 │   ├── analyzer/       # Performance metrics (Sharpe, Sortino, Calmar, etc.)
-│   ├── strategies/     # Example: DualMA
+│   ├── strategies/     # C++ strategies: DualMA, MACDCross
+│   ├── cli/            # C++ CLI (direct ClickHouse backtest)
 │   ├── bind/           # pybind11 module
 │   ├── bench/          # Benchmark
-│   └── test/           # Unit tests
+│   └── test/           # Unit tests (66 tests)
 ├── python/
 │   ├── cli.py              # CLI entry point
 │   ├── data_collector.py   # Binance → ClickHouse pipeline
-│   └── strategies/         # Python strategy examples
+│   ├── plot_results.py     # Backtest visualization
+│   ├── freqtrade_compare.py # qe vs Freqtrade comparison
+│   ├── strategies/         # Python strategies (dual_ma, macd_cross, rsi_reversal, bollinger_breakout, momentum_rotation)
+│   └── ft_strategies/      # Freqtrade-compatible strategy wrappers
 ├── data/               # CSV test data
 └── CMakeLists.txt
 ```
@@ -246,8 +252,8 @@ quant-engine/
 - [x] Phase 1: C++ 回测引擎核心（Engine/Context/Strategy/Broker/Feed/Indicators）
 - [x] Phase 2.1: Python 策略层（pybind11）+ ClickHouse 数据管道 + CLI
 - [x] Phase 2.2: 现货回测可用（止损单、maker/taker 费率、成交量限制、Sortino/Calmar 等绩效指标）
+- [x] Phase 2.3: C++ CLI、新策略（RSI/Bollinger）、Freqtrade 对比工具、架构文档、可视化
 - [ ] Phase 3: 实盘交易（Binance WebSocket + LiveBroker + 风控）
-- [ ] Phase 4: 可视化 + 文档
 
 ## License
 
