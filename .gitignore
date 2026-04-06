@@ -3,3 +3,4 @@ __pycache__/
 .ccls-cache/
 compile_commands.json
 python/output/
+docs/
