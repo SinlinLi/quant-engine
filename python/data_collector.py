@@ -56,7 +56,7 @@ def collect(
     ch_host: str = "localhost",
     ch_port: int = 8123,
     ch_user: str = "default",
-    ch_password: str = "***REMOVED***",
+    ch_password: str = "",
 ) -> int:
     """采集 Binance K 线并写入 ClickHouse
 

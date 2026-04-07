@@ -65,7 +65,7 @@ static void print_usage() {
         "  --ch-host <H>        (default: localhost)\n"
         "  --ch-port <P>        (default: 8123)\n"
         "  --ch-user <U>        (default: default)\n"
-        "  --ch-password <P>    (default: env QE_CH_PASSWORD or ***REMOVED***)\n"
+        "  --ch-password <P>    (default: env QE_CH_PASSWORD)\n"
     );
 }
 
@@ -74,7 +74,7 @@ static Args parse_args(int argc, char** argv) {
 
     // 默认密码从环境变量读取
     const char* env_pw = getenv("QE_CH_PASSWORD");
-    a.ch_password = env_pw ? env_pw : "***REMOVED***";
+    a.ch_password = env_pw ? env_pw : "";
 
     if (argc < 2) { print_usage(); exit(1); }
     a.command = argv[1];

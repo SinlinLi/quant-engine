@@ -18,7 +18,7 @@ struct CHConfig {
     std::string host = "localhost";
     int port = 8123;
     std::string user = "default";
-    std::string password = "***REMOVED***";
+    std::string password;  // 通过环境变量 QE_CH_PASSWORD 或命令行 --ch-password 设置
 };
 
 // 每行是一个 vector<string>（TSV 列）
