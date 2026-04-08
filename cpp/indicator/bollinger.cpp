@@ -10,19 +10,33 @@ Bollinger::Bollinger(int period, double num_std)
       num_std_(num_std), buf_(period) {}
 
 void Bollinger::update(const Bar& bar) {
-    buf_.push(bar.close);
+    double new_val = bar.close;
+
+    if (buf_.full()) {
+        // 窗口已满：滑动 Welford —— 移除最旧值，加入新值
+        double old_val = buf_[period_ - 1];  // 即将被覆盖的最旧值
+        double old_mean = mean_;
+        mean_ += (new_val - old_val) / period_;
+        // m2 增量更新：加入新值的贡献，减去旧值的贡献
+        m2_ += (new_val - old_mean) * (new_val - mean_)
+             - (old_val - old_mean) * (old_val - mean_);
+        // 浮点误差可能导致 m2_ 微小负值
+        if (m2_ < 0.0) m2_ = 0.0;
+    } else {
+        // 窗口未满：标准 Welford 递推
+        double old_mean = mean_;
+        mean_ += (new_val - mean_) / (buf_.count() + 1);
+        m2_ += (new_val - old_mean) * (new_val - mean_);
+    }
+
+    buf_.push(new_val);
+
     if (!buf_.full())
         return;
 
     middle_ = buf_.sum() / period_;
-
-    // 标准差：遍历 buffer 一次
-    double sq_sum = 0.0;
-    for (int i = 0; i < period_; ++i) {
-        double diff = buf_[i] - middle_;
-        sq_sum += diff * diff;
-    }
-    double stddev = std::sqrt(sq_sum / period_);
+    double variance = m2_ / period_;  // population variance
+    double stddev = std::sqrt(variance);
 
     upper_ = middle_ + num_std_ * stddev;
     lower_ = middle_ - num_std_ * stddev;

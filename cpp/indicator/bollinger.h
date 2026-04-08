@@ -23,6 +23,8 @@ private:
     double middle_ = 0.0;
     double upper_ = 0.0;
     double lower_ = 0.0;
+    double mean_ = 0.0;   // Welford 在线均值
+    double m2_ = 0.0;     // Welford 离差平方和 Σ(x - mean)²
 };
 
 }  // namespace qe
